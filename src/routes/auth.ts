@@ -15,7 +15,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     async function verify() {
       const ticket = await client.verifyIdToken({
         idToken: access_token,
-        audience: process.env.CLIENT_ID,
+        audience: String(process.env.CLIENT_ID),
       });
       const payload = ticket.getPayload();
       return payload;

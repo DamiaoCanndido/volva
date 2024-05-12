@@ -1,30 +1,12 @@
 import fastify from 'fastify';
-import env from '@fastify/env';
 import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
 import { authRoutes } from '../routes';
 
-const schema = {
-  type: 'object',
-  required: ['PORT'],
-  properties: {
-    PORT: {
-      type: 'string',
-      default: 3333,
-    },
-  },
-};
-
-const options = {
-  confKey: 'config',
-  schema,
-};
-
 const app = fastify();
 
-app.register(env, options);
 app.register(jwt, {
-  secret: 'uaydkjahvwtygvw',
+  secret: String(process.env.JWT_SECRET),
 });
 app.register(cors, {
   origin: true,
