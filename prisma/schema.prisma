@@ -21,6 +21,7 @@ model User {
   avatarUrl String?
   createdAt DateTime @default(now())
   ownPools  Pool[]
+  players   Player[]
 }
 
 enum TypePool {
@@ -34,7 +35,7 @@ enum TypeScore {
 
 model Pool {
   id        String    @id @default(uuid())
-  name      String?
+  code      String
   createdAt DateTime  @default(now())
   ownerId   String
   owner     User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
@@ -47,4 +48,31 @@ model Pool {
   winners   String[]  @default([])
   drawn     String[]  @default([])
   losers    String[]  @default([])
+  players   Player[]
+}
+
+model Player {
+  id      String  @id @default(uuid())
+  points  Int     @default(0)
+  userId  String
+  poolId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: NoAction)
+  pool    Pool    @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  guesses Guess[]
+
+  @@unique([userId, poolId])
+}
+
+model Guess {
+  id        String   @id @default(uuid())
+  homeScore Int
+  awayScore Int
+  points    Int      @default(0)
+  startDate DateTime
+  createdAt DateTime @default(now())
+  gameId    Int
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, playerId])
 }
