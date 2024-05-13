@@ -20,4 +20,25 @@ model User {
   googleId  String   @unique
   avatarUrl String?
   createdAt DateTime @default(now())
+  ownPools  Pool[]
+}
+
+enum TypePoint {
+  normal
+}
+
+model Pool {
+  id        String    @id @default(uuid())
+  name      String?
+  createdAt DateTime  @default(now())
+  ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
+  type      TypePoint @default(normal)
+  queue     Int       @default(1)
+  nPlayers  Int       @default(2) // máximo 10
+  nGames    Int // máximo 10
+  games     Int[]
+  winners   String[]  @default([])
+  drawn     String[]  @default([])
+  losers    String[]  @default([])
 }

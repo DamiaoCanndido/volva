@@ -12,6 +12,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const { access_token } = createUserBody.parse(request.body);
 
     const client = new OAuth2Client();
+
     async function verify() {
       const ticket = await client.verifyIdToken({
         idToken: access_token,
@@ -21,7 +22,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       return payload;
     }
 
-    const userData = await verify();
+    let userData;
+
+    try {
+      userData = await verify();
+    } catch (error) {
+      return reply.status(400).send({ error: 'token expired or invalid.' });
+    }
 
     const userInfoSchema = z.object({
       sub: z.string(),
@@ -60,6 +67,6 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
     );
 
-    return { token };
+    return reply.status(201).send({ token });
   });
 }
