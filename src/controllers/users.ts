@@ -69,6 +69,15 @@ export class Users {
       }
     );
 
-    return reply.status(201).send({ token });
+    return reply
+      .setCookie('token', token, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        signed: true,
+        httpOnly: true,
+        secure: true,
+      })
+      .status(201)
+      .send({ token });
   }
 }
