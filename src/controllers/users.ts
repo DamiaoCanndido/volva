@@ -82,10 +82,6 @@ export class Users {
   }
 
   async getMe(request: FastifyRequest, reply: FastifyReply) {
-    const user = this.fastify.jwt.decode(request.cookies.token!) as User;
-    if (user.sub === request.user.sub) {
-      return reply.status(200).send({ user: request.user, verified: true });
-    }
-    return reply.status(401).send({ verified: false });
+    return reply.status(200).send({ user: request.user });
   }
 }
