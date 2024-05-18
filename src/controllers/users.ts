@@ -1,7 +1,15 @@
 import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
-import { OAuth2Client } from 'google-auth-library';
+import axios from 'axios';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+
+type User = {
+  name: string;
+  avatarUrl: string;
+  sub: string;
+  iat: number;
+  exp: number;
+};
 
 export class Users {
   constructor(private fastify: FastifyInstance) {}
@@ -13,21 +21,14 @@ export class Users {
 
     const { access_token } = createUserBody.parse(request.body);
 
-    const client = new OAuth2Client();
-
-    async function verify() {
-      const ticket = await client.verifyIdToken({
-        idToken: access_token,
-        audience: String(process.env.CLIENT_ID),
-      });
-      const payload = ticket.getPayload();
-      return payload;
-    }
-
     let userData;
 
     try {
-      userData = await verify();
+      userData = await axios({
+        method: 'GET',
+        url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
     } catch (error) {
       return reply.status(400).send({ error: 'token expired or invalid.' });
     }
@@ -39,7 +40,7 @@ export class Users {
       picture: z.string().url(),
     });
 
-    const userInfo = userInfoSchema.parse(userData);
+    const userInfo = userInfoSchema.parse(userData.data);
 
     let user = await prisma.user.findUnique({
       where: {
@@ -73,11 +74,18 @@ export class Users {
       .setCookie('token', token, {
         path: '/',
         maxAge: 60 * 60 * 24 * 7,
-        signed: true,
         httpOnly: true,
         secure: true,
       })
       .status(201)
       .send({ token });
+  }
+
+  async getMe(request: FastifyRequest, reply: FastifyReply) {
+    const user = this.fastify.jwt.decode(request.cookies.token!) as User;
+    if (user.sub === request.user.sub) {
+      return reply.status(200).send({ user: request.user, verified: true });
+    }
+    return reply.status(401).send({ verified: false });
   }
 }
