@@ -128,4 +128,92 @@ export class Pools {
 
     return reply.status(200).send({ pool: pool.code });
   }
+
+  async joinCustom(request: FastifyRequest, reply: FastifyReply) {
+    const joinCustomBody = z.object({
+      code: z.string(),
+    });
+
+    const { code } = joinCustomBody.parse(request.body);
+
+    const pool = await prisma.pool.findUnique({
+      where: {
+        code,
+        poolClosed: false,
+      },
+      include: {
+        _count: {
+          select: {
+            players: true,
+          },
+        },
+      },
+    });
+
+    if (!pool) {
+      return reply.status(404).send({ error: 'no pool available create one.' });
+    }
+
+    const playerAlready = await prisma.player.findUnique({
+      where: {
+        userId_poolId: {
+          userId: request.user.sub,
+          poolId: pool.id,
+        },
+      },
+    });
+
+    if (playerAlready) {
+      return reply.status(400).send({ error: 'you are already in this pool.' });
+    }
+
+    await prisma.player.create({
+      data: {
+        poolId: pool?.id!,
+        userId: request.user.sub,
+      },
+    });
+
+    const poolCreate = await prisma.pool.findUnique({
+      where: {
+        code,
+        poolClosed: false,
+      },
+      include: {
+        _count: {
+          select: {
+            players: true,
+          },
+        },
+      },
+    });
+
+    if (poolCreate?._count.players! >= poolCreate?.nPlayers!) {
+      await prisma.pool.update({
+        where: {
+          id: poolCreate?.id,
+        },
+        data: {
+          poolClosed: true,
+        },
+      });
+    }
+
+    return reply.status(200).send({ pool: pool.code });
+  }
+
+  async myPools(request: FastifyRequest, reply: FastifyReply) {
+    const myPools = await prisma.pool.findMany({
+      where: {
+        players: {
+          some: {
+            userId: {
+              equals: request.user.sub,
+            },
+          },
+        },
+      },
+    });
+    return reply.status(200).send({ pools: myPools });
+  }
 }

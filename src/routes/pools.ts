@@ -10,4 +10,10 @@ export async function poolRoutes(fastify: FastifyInstance) {
     { onRequest: [authenticate] },
     pools.joinNormal
   );
+  fastify.post(
+    '/pools/custom',
+    { onRequest: [authenticate] },
+    pools.joinCustom
+  );
+  fastify.get('/pools/my', { onRequest: [authenticate] }, pools.myPools);
 }

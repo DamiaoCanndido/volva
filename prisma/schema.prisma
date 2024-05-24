@@ -35,7 +35,7 @@ enum TypeScore {
 
 model Pool {
   id         String    @id @default(uuid())
-  code       String
+  code       String    @unique
   createdAt  DateTime  @default(now())
   ownerId    String
   owner      User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
