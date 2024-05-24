@@ -34,21 +34,23 @@ enum TypeScore {
 }
 
 model Pool {
-  id        String    @id @default(uuid())
-  code      String
-  createdAt DateTime  @default(now())
-  ownerId   String
-  owner     User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
-  mode      TypePool  @default(normal)
-  scoring   TypeScore @default(oneZero)
-  queue     Int       @default(1)
-  nPlayers  Int       @default(2) // máximo 10
-  nGames    Int // máximo 10
-  games     Int[]
-  winners   String[]  @default([])
-  drawn     String[]  @default([])
-  losers    String[]  @default([])
-  players   Player[]
+  id         String    @id @default(uuid())
+  code       String
+  createdAt  DateTime  @default(now())
+  ownerId    String
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
+  mode       TypePool  @default(normal)
+  scoring    TypeScore @default(oneZero)
+  queue      Int       @default(1)
+  nPlayers   Int       @default(2) // máximo 10
+  nGames     Int // máximo 16
+  games      Int[]
+  leagueId   Int?
+  poolClosed Boolean   @default(false)
+  winners    String[]  @default([])
+  drawn      String[]  @default([])
+  losers     String[]  @default([])
+  players    Player[]
 }
 
 model Player {
