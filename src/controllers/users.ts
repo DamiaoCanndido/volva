@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import axios from 'axios';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { BadRequest } from '../errors';
 
 type User = {
   name: string;
@@ -30,7 +31,7 @@ export class Users {
         headers: { Authorization: `Bearer ${access_token}` },
       });
     } catch (error) {
-      return reply.status(400).send({ error: 'token expired or invalid.' });
+      throw new BadRequest('token expired or invalid.');
     }
 
     const userInfoSchema = z.object({

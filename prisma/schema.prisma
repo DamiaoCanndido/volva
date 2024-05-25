@@ -70,7 +70,7 @@ model Guess {
   homeScore Int
   awayScore Int
   points    Int      @default(0)
-  startDate DateTime
+  isVisible Boolean  @default(false)
   createdAt DateTime @default(now())
   gameId    Int
   playerId  String

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import axios from 'axios';
 import { Match } from '../entities';
+import { BadRequest } from '../errors';
 
 export class Pools {
   async create(request: FastifyRequest, reply: FastifyReply) {
@@ -33,7 +34,7 @@ export class Pools {
       });
       matches = foot.data;
     } catch (error) {
-      return reply.status(400).send({ error: 'Error with external api' });
+      throw new BadRequest('Error with external api');
     }
 
     try {
@@ -58,7 +59,7 @@ export class Pools {
       });
       return reply.status(201).send({ code });
     } catch (error) {
-      return reply.status(400).send({ error });
+      throw new BadRequest('some field is missing.');
     }
   }
 
@@ -78,7 +79,7 @@ export class Pools {
     });
 
     if (!pool) {
-      return reply.status(400).send({ error: 'no pool available create one.' });
+      throw new BadRequest('no pool available create one.');
     }
 
     const playerAlready = await prisma.player.findUnique({
@@ -91,7 +92,7 @@ export class Pools {
     });
 
     if (playerAlready) {
-      return reply.status(400).send({ error: 'you are already in this pool.' });
+      throw new BadRequest('you are already in this pool.');
     }
 
     await prisma.player.create({
@@ -151,7 +152,7 @@ export class Pools {
     });
 
     if (!pool) {
-      return reply.status(404).send({ error: 'no pool available create one.' });
+      throw new BadRequest('no pool available create one.');
     }
 
     const playerAlready = await prisma.player.findUnique({
@@ -164,7 +165,7 @@ export class Pools {
     });
 
     if (playerAlready) {
-      return reply.status(400).send({ error: 'you are already in this pool.' });
+      throw new BadRequest('you are already in this pool.');
     }
 
     await prisma.player.create({

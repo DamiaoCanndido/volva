@@ -2,7 +2,8 @@ import fastify from 'fastify';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
-import { authRoutes, poolRoutes } from '../routes';
+import { authRoutes, poolRoutes, guessRoutes } from '../routes';
+import { errorHandler } from '../errors';
 
 const app = fastify();
 
@@ -18,6 +19,9 @@ app.register(cors, {
 });
 app.register(authRoutes);
 app.register(poolRoutes);
+app.register(guessRoutes);
+
+app.setErrorHandler(errorHandler);
 
 app.listen({ port: 4444, host: '0.0.0.0' }).then(() => {
   console.log('Server running on port 4444.');
