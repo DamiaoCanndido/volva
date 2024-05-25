@@ -15,6 +15,13 @@ export class Guesses {
 
     const { gameId, poolId } = createGuessParams.parse(request.params);
 
+    const createGuessBody = z.object({
+      homeScore: z.number(),
+      awayScore: z.number(),
+    });
+
+    const { homeScore, awayScore } = createGuessBody.parse(request.body);
+
     const player = await prisma.player.findUnique({
       where: {
         userId_poolId: {
@@ -73,11 +80,103 @@ export class Guesses {
         },
       },
     });
-
     if (guess) {
       throw new BadRequest('There is already a guess for this pool.');
     }
 
-    return reply.send({ ok: gameExistsOnPool });
+    await prisma.guess.create({
+      data: {
+        homeScore,
+        awayScore,
+        gameId: Number(gameId),
+        playerId: player.id,
+      },
+    });
+
+    return reply.status(201).send({ message: 'guess created.' });
+  }
+
+  async getGuesses(request: FastifyRequest, reply: FastifyReply) {
+    const getGuessParams = z.object({
+      poolId: z.string(),
+      gameId: z.string(),
+    });
+
+    const { gameId, poolId } = getGuessParams.parse(request.params);
+
+    const pool = await prisma.pool.findUnique({
+      where: {
+        id: poolId,
+      },
+    });
+    if (!pool) {
+      throw new BadRequest('pool not exists.');
+    }
+
+    let game: Match;
+
+    try {
+      const response = await axios({
+        method: 'GET',
+        url: `${String(process.env.API)}/match/${gameId}`,
+      });
+      game = response.data;
+    } catch (error) {
+      throw new BadRequest('game not exists.');
+    }
+
+    const guess = await prisma.guess.findMany({
+      where: {
+        gameId: Number(gameId),
+      },
+    });
+
+    console.log(guess);
+
+    if (
+      guess.length > 0 &&
+      guess[0].isVisible === false &&
+      game.startDate <= dateUTC(Date.now())
+    ) {
+      await prisma.guess.updateMany({
+        where: {
+          gameId: Number(gameId),
+        },
+        data: {
+          isVisible: true,
+        },
+      });
+    }
+
+    const gameExistsOnPool = await prisma.pool.findMany({
+      where: {
+        games: {
+          has: Number(gameId),
+        },
+      },
+    });
+    if (gameExistsOnPool.length === 0) {
+      throw new BadRequest('The game does not exist in the pool.');
+    }
+
+    const guesses = await prisma.guess.findMany({
+      where: {
+        gameId: Number(gameId),
+        isVisible: true,
+      },
+      include: {
+        player: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return reply.status(200).send({ guesses });
   }
 }
