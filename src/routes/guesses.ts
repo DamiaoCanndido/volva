@@ -14,4 +14,9 @@ export async function guessRoutes(fastify: FastifyInstance) {
     { onRequest: [authenticate] },
     guesses.getGuesses
   );
+  fastify.get(
+    '/pool/:poolId/game/:gameId/myguess',
+    { onRequest: [authenticate] },
+    guesses.myGuess
+  );
 }

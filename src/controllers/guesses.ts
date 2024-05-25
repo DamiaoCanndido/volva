@@ -131,8 +131,6 @@ export class Guesses {
       },
     });
 
-    console.log(guess);
-
     if (
       guess.length > 0 &&
       guess[0].isVisible === false &&
@@ -178,5 +176,74 @@ export class Guesses {
     });
 
     return reply.status(200).send({ guesses });
+  }
+
+  async myGuess(request: FastifyRequest, reply: FastifyReply) {
+    const getGuessParams = z.object({
+      poolId: z.string(),
+      gameId: z.string(),
+    });
+
+    const { gameId, poolId } = getGuessParams.parse(request.params);
+
+    const pool = await prisma.pool.findUnique({
+      where: {
+        id: poolId,
+      },
+    });
+    if (!pool) {
+      throw new BadRequest('pool not exists.');
+    }
+
+    try {
+      await axios({
+        method: 'GET',
+        url: `${String(process.env.API)}/match/${gameId}`,
+      });
+    } catch (error) {
+      throw new BadRequest('game not exists.');
+    }
+
+    const gameExistsOnPool = await prisma.pool.findMany({
+      where: {
+        games: {
+          has: Number(gameId),
+        },
+      },
+    });
+    if (gameExistsOnPool.length === 0) {
+      throw new BadRequest('The game does not exist in the pool.');
+    }
+
+    const player = await prisma.player.findUnique({
+      where: {
+        userId_poolId: {
+          userId: request.user.sub,
+          poolId,
+        },
+      },
+    });
+
+    const guess = await prisma.guess.findUnique({
+      where: {
+        gameId_playerId: {
+          gameId: Number(gameId),
+          playerId: player!.id,
+        },
+      },
+      include: {
+        player: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return reply.status(200).send({ guess });
   }
 }
