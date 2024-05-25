@@ -3,7 +3,7 @@ import { Team } from './team';
 export type Match = {
   id: number;
   fullTime: boolean;
-  startDate: string;
+  startDate: Date;
   round: string;
   leagueId: number;
   homeId: number;

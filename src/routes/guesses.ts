@@ -4,5 +4,9 @@ import { Guesses } from '../controllers';
 
 export async function guessRoutes(fastify: FastifyInstance) {
   const guesses = new Guesses();
-  fastify.post('/guesses', { onRequest: [authenticate] }, guesses.create);
+  fastify.post(
+    '/pool/:poolId/game/:gameId/guess',
+    { onRequest: [authenticate] },
+    guesses.create
+  );
 }
