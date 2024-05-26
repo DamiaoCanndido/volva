@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Pool" ALTER COLUMN "queue" SET DEFAULT 0;

@@ -16,4 +16,5 @@ export async function poolRoutes(fastify: FastifyInstance) {
     pools.joinCustom
   );
   fastify.get('/pools/my', { onRequest: [authenticate] }, pools.myPools);
+  fastify.get('/pools/:id/rank', { onRequest: [authenticate] }, pools.poolRank);
 }

@@ -23,6 +23,7 @@
     "axios": "^1.6.8",
     "fastify": "^4.26.2",
     "short-unique-id": "^5.2.0",
+    "socket.io-client": "^4.7.5",
     "zod": "^3.23.8"
   }
 }

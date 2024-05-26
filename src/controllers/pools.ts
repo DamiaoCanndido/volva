@@ -217,4 +217,31 @@ export class Pools {
     });
     return reply.status(200).send({ pools: myPools });
   }
+
+  async poolRank(request: FastifyRequest, reply: FastifyReply) {
+    const getPoolParam = z.object({
+      id: z.string(),
+    });
+    const { id } = getPoolParam.parse(request.params);
+
+    const pool = await prisma.pool.findUnique({ where: { id } });
+    if (!pool) {
+      throw new BadRequest('pool not exists.');
+    }
+
+    const players = await prisma.player.findMany({
+      where: {
+        poolId: id,
+      },
+      select: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+        points: true,
+      },
+    });
+    return reply.status(200).send({ players });
+  }
 }

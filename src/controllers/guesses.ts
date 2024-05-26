@@ -31,7 +31,7 @@ export class Guesses {
       },
     });
     if (!player) {
-      throw new Forbidden('you are already in this pool.');
+      throw new Forbidden('you arent in that pool.');
     }
 
     const pool = await prisma.pool.findUnique({
