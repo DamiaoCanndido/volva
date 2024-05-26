@@ -7,7 +7,7 @@ import { errorHandler } from '../errors';
 import { getMatch } from '../ws';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3333');
+const socket = io(String(process.env.API));
 
 const app = fastify();
 

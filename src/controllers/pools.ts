@@ -237,9 +237,13 @@ export class Pools {
         user: {
           select: {
             name: true,
+            id: true,
           },
         },
         points: true,
+      },
+      orderBy: {
+        points: 'desc',
       },
     });
     return reply.status(200).send({ players });

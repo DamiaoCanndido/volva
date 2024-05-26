@@ -195,15 +195,6 @@ export class Guesses {
       throw new BadRequest('pool not exists.');
     }
 
-    try {
-      await axios({
-        method: 'GET',
-        url: `${String(process.env.API)}/match/${gameId}`,
-      });
-    } catch (error) {
-      throw new BadRequest('game not exists.');
-    }
-
     const gameExistsOnPool = await prisma.pool.findMany({
       where: {
         games: {
@@ -211,6 +202,7 @@ export class Guesses {
         },
       },
     });
+
     if (gameExistsOnPool.length === 0) {
       throw new BadRequest('The game does not exist in the pool.');
     }
@@ -223,6 +215,10 @@ export class Guesses {
         },
       },
     });
+
+    if (!player) {
+      throw new Forbidden('Youre not in that pool.');
+    }
 
     const guess = await prisma.guess.findUnique({
       where: {

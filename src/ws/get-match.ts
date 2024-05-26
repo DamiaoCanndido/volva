@@ -19,6 +19,28 @@ export const getMatch = async (match: Match) => {
       where: { gameId: match.id },
     });
 
+    const queueIncrement = await prisma.guess.findFirst({
+      where: {
+        gameId: match.id,
+        gameFull: false,
+      },
+    });
+
+    if (queueIncrement) {
+      await prisma.pool.updateMany({
+        where: {
+          games: {
+            has: match.id,
+          },
+        },
+        data: {
+          queue: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
     for (const guess of guesses) {
       await prisma.guess.update({
         where: {
@@ -31,6 +53,7 @@ export const getMatch = async (match: Match) => {
             match.homeScore,
             match.awayScore
           ),
+          gameFull: true,
         },
       });
     }
@@ -55,20 +78,46 @@ export const getMatch = async (match: Match) => {
         },
       });
     }
-    /*
-    const pools = await prisma.pool.updateMany({
+
+    const pools = await prisma.pool.findMany({
       where: {
         games: {
           has: match.id,
         },
       },
-      data: {
-        queue: {
-          increment: 1,
-        },
-      },
     });
-    */
+
+    for (const p of pools) {
+      if (p.queue === p.nGames) {
+        const rank = await prisma.player.findMany({
+          where: {
+            poolId: p.id,
+          },
+          select: {
+            user: {
+              select: {
+                name: true,
+                id: true,
+              },
+            },
+            points: true,
+          },
+          orderBy: {
+            points: 'desc',
+          },
+        });
+        // criar função para definir vencedor, empates e derrotas.//
+        await prisma.pool.update({
+          where: {
+            id: p.id,
+          },
+          data: {
+            winners: [rank[0].user.id],
+            poolFinished: true,
+          },
+        });
+      }
+    }
   } finally {
     isFetching = false;
   }
