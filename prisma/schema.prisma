@@ -35,14 +35,16 @@ enum TypeScore {
 
 model Pool {
   id           String    @id @default(uuid())
+  name         String
   code         String    @unique
   createdAt    DateTime  @default(now())
+  startTime    DateTime
+  endTime      DateTime
   ownerId      String
   owner        User      @relation(fields: [ownerId], references: [id], onDelete: NoAction)
   mode         TypePool  @default(normal)
   scoring      TypeScore @default(oneZero)
-  queue        Int       @default(0)
-  nPlayers     Int       @default(2) // máximo 10
+  gamesClosed  Int       @default(0)
   nGames       Int // máximo 16
   games        Int[]
   leagueId     Int?

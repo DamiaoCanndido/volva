@@ -5,18 +5,19 @@ import { prisma } from '../lib/prisma';
 import axios from 'axios';
 import { Match } from '../entities';
 import { BadRequest } from '../errors';
+import { dateUTC } from '../helpers';
 
 export class Pools {
   async create(request: FastifyRequest, reply: FastifyReply) {
     const createPoolBody = z.object({
+      name: z.string(),
       mode: z.enum(['normal', 'custom']),
-      nPlayers: z.optional(z.number().gte(2)),
-      nGames: z.number().gte(1),
+      nGames: z.number().gte(1).lte(16),
       leagueId: z.optional(z.number()),
       scoring: z.enum(['oneZero']),
     });
 
-    const { mode, nGames, nPlayers, leagueId, scoring } = createPoolBody.parse(
+    const { name, mode, nGames, leagueId, scoring } = createPoolBody.parse(
       request.body
     );
 
@@ -29,8 +30,10 @@ export class Pools {
       const foot = await axios({
         method: 'GET',
         url: leagueId
-          ? `${String(process.env.API)}/match/${leagueId}/league?t=${nGames}`
-          : `${String(process.env.API)}/match?t=${nGames}`,
+          ? `${String(
+              process.env.API
+            )}/match/${leagueId}/league?ft=false&t=${nGames}`
+          : `${String(process.env.API)}/match?ft=false&t=${nGames}`,
       });
       matches = foot.data;
     } catch (error) {
@@ -40,10 +43,10 @@ export class Pools {
     try {
       await prisma.pool.create({
         data: {
+          name,
           mode,
           code,
           nGames: matches!.length,
-          nPlayers,
           games: matches!.map((e) => {
             return e.id;
           }),
@@ -55,6 +58,8 @@ export class Pools {
               userId: request.user.sub,
             },
           },
+          startTime: matches[0].startDate,
+          endTime: matches[matches.length - 1].startDate,
         },
       });
       return reply.status(201).send({ code });
@@ -68,13 +73,6 @@ export class Pools {
       where: {
         mode: 'normal',
         poolClosed: false,
-      },
-      include: {
-        _count: {
-          select: {
-            players: true,
-          },
-        },
       },
     });
 
@@ -95,37 +93,24 @@ export class Pools {
       throw new BadRequest('you are already in this pool.');
     }
 
+    if (pool.startTime < dateUTC(Date.now())) {
+      await prisma.pool.update({
+        where: {
+          id: pool.id,
+        },
+        data: {
+          poolClosed: true,
+        },
+      });
+      throw new BadRequest('pool closed.');
+    }
+
     await prisma.player.create({
       data: {
         poolId: pool?.id!,
         userId: request.user.sub,
       },
     });
-
-    const poolCreate = await prisma.pool.findFirst({
-      where: {
-        mode: 'normal',
-        poolClosed: false,
-      },
-      include: {
-        _count: {
-          select: {
-            players: true,
-          },
-        },
-      },
-    });
-
-    if (poolCreate?._count.players! >= poolCreate?.nPlayers!) {
-      await prisma.pool.update({
-        where: {
-          id: poolCreate?.id,
-        },
-        data: {
-          poolClosed: true,
-        },
-      });
-    }
 
     return reply.status(200).send({ pool: pool.code });
   }
@@ -142,13 +127,6 @@ export class Pools {
         code,
         poolClosed: false,
       },
-      include: {
-        _count: {
-          select: {
-            players: true,
-          },
-        },
-      },
     });
 
     if (!pool) {
@@ -168,37 +146,24 @@ export class Pools {
       throw new BadRequest('you are already in this pool.');
     }
 
+    if (pool.startTime < dateUTC(Date.now())) {
+      await prisma.pool.update({
+        where: {
+          id: pool.id,
+        },
+        data: {
+          poolClosed: true,
+        },
+      });
+      throw new BadRequest('pool closed.');
+    }
+
     await prisma.player.create({
       data: {
         poolId: pool?.id!,
         userId: request.user.sub,
       },
     });
-
-    const poolCreate = await prisma.pool.findUnique({
-      where: {
-        code,
-        poolClosed: false,
-      },
-      include: {
-        _count: {
-          select: {
-            players: true,
-          },
-        },
-      },
-    });
-
-    if (poolCreate?._count.players! >= poolCreate?.nPlayers!) {
-      await prisma.pool.update({
-        where: {
-          id: poolCreate?.id,
-        },
-        data: {
-          poolClosed: true,
-        },
-      });
-    }
 
     return reply.status(200).send({ pool: pool.code });
   }

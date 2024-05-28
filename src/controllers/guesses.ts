@@ -55,7 +55,7 @@ export class Guesses {
       throw new BadRequest('game not exists.');
     }
 
-    if (game.startDate < dateUTC(Date.now())) {
+    if (new Date(game.startDate) < dateUTC(Date.now())) {
       return reply.status(400).send({
         message: 'You cannot send guesses after the game date',
       });
@@ -134,7 +134,7 @@ export class Guesses {
     if (
       guess.length > 0 &&
       guess[0].isVisible === false &&
-      game.startDate <= dateUTC(Date.now())
+      new Date(game.startDate) <= dateUTC(Date.now())
     ) {
       await prisma.guess.updateMany({
         where: {
