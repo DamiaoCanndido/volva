@@ -68,11 +68,31 @@ export class Pools {
     }
   }
 
-  async joinNormal(request: FastifyRequest, reply: FastifyReply) {
-    const pool = await prisma.pool.findFirst({
+  async getNormalPools(request: FastifyRequest, reply: FastifyReply) {
+    const pools = await prisma.pool.findMany({
       where: {
         mode: 'normal',
-        poolClosed: false,
+        startTime: {
+          gt: dateUTC(Date.now()),
+        },
+      },
+    });
+    return reply.status(200).send({ pools });
+  }
+
+  async joinNormal(request: FastifyRequest, reply: FastifyReply) {
+    const normalParam = z.object({
+      id: z.string(),
+    });
+    const { id } = normalParam.parse(request.params);
+
+    const pool = await prisma.pool.findUnique({
+      where: {
+        id,
+        mode: 'normal',
+        startTime: {
+          gt: dateUTC(Date.now()),
+        },
       },
     });
 
@@ -91,18 +111,6 @@ export class Pools {
 
     if (playerAlready) {
       throw new BadRequest('you are already in this pool.');
-    }
-
-    if (pool.startTime < dateUTC(Date.now())) {
-      await prisma.pool.update({
-        where: {
-          id: pool.id,
-        },
-        data: {
-          poolClosed: true,
-        },
-      });
-      throw new BadRequest('pool closed.');
     }
 
     await prisma.player.create({
@@ -125,7 +133,9 @@ export class Pools {
     const pool = await prisma.pool.findUnique({
       where: {
         code,
-        poolClosed: false,
+        startTime: {
+          gt: dateUTC(Date.now()),
+        },
       },
     });
 
@@ -144,18 +154,6 @@ export class Pools {
 
     if (playerAlready) {
       throw new BadRequest('you are already in this pool.');
-    }
-
-    if (pool.startTime < dateUTC(Date.now())) {
-      await prisma.pool.update({
-        where: {
-          id: pool.id,
-        },
-        data: {
-          poolClosed: true,
-        },
-      });
-      throw new BadRequest('pool closed.');
     }
 
     await prisma.player.create({

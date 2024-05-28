@@ -6,9 +6,14 @@ export async function poolRoutes(fastify: FastifyInstance) {
   const pools = new Pools();
   fastify.post('/pools', { onRequest: [authenticate] }, pools.create);
   fastify.post(
-    '/pools/normal',
+    '/pools/:id/normal',
     { onRequest: [authenticate] },
     pools.joinNormal
+  );
+  fastify.get(
+    '/pools/normal',
+    { onRequest: [authenticate] },
+    pools.getNormalPools
   );
   fastify.post(
     '/pools/custom',

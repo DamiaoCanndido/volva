@@ -48,7 +48,6 @@ model Pool {
   nGames       Int // máximo 16
   games        Int[]
   leagueId     Int?
-  poolClosed   Boolean   @default(false) // lobby fechada
   poolFinished Boolean   @default(false) // bolão finalizado
   winners      String[]  @default([])
   drawn        String[]  @default([])
