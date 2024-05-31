@@ -21,6 +21,17 @@ export class Pools {
       request.body
     );
 
+    if (leagueId) {
+      try {
+        await axios({
+          method: 'GET',
+          url: `${String(process.env.API)}/league/${leagueId}`,
+        });
+      } catch (error) {
+        throw new BadRequest('League not exists.');
+      }
+    }
+
     const generate = new ShortUniqueId({ length: 10 });
     const code = String(generate.rnd()).toUpperCase();
 
@@ -174,6 +185,13 @@ export class Pools {
             userId: {
               equals: request.user.sub,
             },
+          },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            name: true,
           },
         },
       },

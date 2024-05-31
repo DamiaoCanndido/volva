@@ -7,6 +7,6 @@ export async function authenticate(
   try {
     await request.jwtVerify();
   } catch (error) {
-    reply.send({ error: 'invalid token.' });
+    reply.status(401).send({ error: 'invalid token.' });
   }
 }
