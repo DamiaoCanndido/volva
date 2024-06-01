@@ -86,6 +86,18 @@ export class Pools {
         startTime: {
           gt: dateUTC(Date.now()),
         },
+        players: {
+          none: {
+            userId: request.user.sub,
+          },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
     return reply.status(200).send({ pools });
@@ -104,24 +116,16 @@ export class Pools {
         startTime: {
           gt: dateUTC(Date.now()),
         },
+        players: {
+          none: {
+            userId: request.user.sub,
+          },
+        },
       },
     });
 
     if (!pool) {
       throw new BadRequest('no pool available create one.');
-    }
-
-    const playerAlready = await prisma.player.findUnique({
-      where: {
-        userId_poolId: {
-          userId: request.user.sub,
-          poolId: pool.id,
-        },
-      },
-    });
-
-    if (playerAlready) {
-      throw new BadRequest('you are already in this pool.');
     }
 
     await prisma.player.create({
@@ -147,24 +151,16 @@ export class Pools {
         startTime: {
           gt: dateUTC(Date.now()),
         },
+        players: {
+          none: {
+            userId: request.user.sub,
+          },
+        },
       },
     });
 
     if (!pool) {
       throw new BadRequest('no pool available create one.');
-    }
-
-    const playerAlready = await prisma.player.findUnique({
-      where: {
-        userId_poolId: {
-          userId: request.user.sub,
-          poolId: pool.id,
-        },
-      },
-    });
-
-    if (playerAlready) {
-      throw new BadRequest('you are already in this pool.');
     }
 
     await prisma.player.create({
@@ -188,6 +184,7 @@ export class Pools {
           },
         },
       },
+      orderBy: { poolFinished: 'asc' },
       include: {
         owner: {
           select: {
