@@ -34,7 +34,7 @@ export const getMatch = async (match: Match) => {
           },
         },
         data: {
-          queue: {
+          gamesClosed: {
             increment: 1,
           },
         },
@@ -88,7 +88,7 @@ export const getMatch = async (match: Match) => {
     });
 
     for (const p of pools) {
-      if (p.queue === p.nGames) {
+      if (p.gamesClosed === p.nGames) {
         const rank = await prisma.player.findMany({
           where: {
             poolId: p.id,
