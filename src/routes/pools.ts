@@ -5,6 +5,7 @@ import { Pools } from '../controllers';
 export async function poolRoutes(fastify: FastifyInstance) {
   const pools = new Pools();
   fastify.post('/pools', { onRequest: [authenticate] }, pools.create);
+  fastify.get('/pools/:id', { onRequest: [authenticate] }, pools.getPoolById);
   fastify.post(
     '/pools/:id/normal',
     { onRequest: [authenticate] },

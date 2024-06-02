@@ -9,7 +9,7 @@ import { dateUTC } from '../helpers';
 export class Guesses {
   async create(request: FastifyRequest, reply: FastifyReply) {
     const createGuessParams = z.object({
-      poolId: z.string(),
+      poolId: z.string().uuid(),
       gameId: z.string(),
     });
 
@@ -98,7 +98,7 @@ export class Guesses {
 
   async getGuesses(request: FastifyRequest, reply: FastifyReply) {
     const getGuessParams = z.object({
-      poolId: z.string(),
+      poolId: z.string().uuid(),
       gameId: z.string(),
     });
 
@@ -180,7 +180,7 @@ export class Guesses {
 
   async myGuess(request: FastifyRequest, reply: FastifyReply) {
     const getGuessParams = z.object({
-      poolId: z.string(),
+      poolId: z.string().uuid(),
       gameId: z.string(),
     });
 

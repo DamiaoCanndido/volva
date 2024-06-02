@@ -79,6 +79,21 @@ export class Pools {
     }
   }
 
+  async getPoolById(request: FastifyRequest, reply: FastifyReply) {
+    const paramId = z.object({
+      id: z.string().uuid(),
+    });
+    const { id } = paramId.parse(request.params);
+
+    const pool = await prisma.pool.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return reply.status(200).send({ pool });
+  }
+
   async getNormalPools(request: FastifyRequest, reply: FastifyReply) {
     const pools = await prisma.pool.findMany({
       where: {
@@ -105,7 +120,7 @@ export class Pools {
 
   async joinNormal(request: FastifyRequest, reply: FastifyReply) {
     const normalParam = z.object({
-      id: z.string(),
+      id: z.string().uuid(),
     });
     const { id } = normalParam.parse(request.params);
 
@@ -198,7 +213,7 @@ export class Pools {
 
   async poolRank(request: FastifyRequest, reply: FastifyReply) {
     const getPoolParam = z.object({
-      id: z.string(),
+      id: z.string().uuid(),
     });
     const { id } = getPoolParam.parse(request.params);
 
