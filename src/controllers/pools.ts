@@ -3,7 +3,7 @@ import ShortUniqueId from 'short-unique-id';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import axios from 'axios';
-import { Match } from '../entities';
+import { League, Match } from '../entities';
 import { BadRequest } from '../errors';
 import { dateUTC } from '../helpers';
 
@@ -14,19 +14,19 @@ export class Pools {
       mode: z.enum(['normal', 'custom']),
       nGames: z.number().gte(1).lte(16),
       leagueId: z.optional(z.number()),
-      scoring: z.enum(['oneZero']),
     });
 
-    const { name, mode, nGames, leagueId, scoring } = createPoolBody.parse(
-      request.body
-    );
+    const { name, mode, nGames, leagueId } = createPoolBody.parse(request.body);
+
+    let league: League | undefined = undefined;
 
     if (leagueId) {
       try {
-        await axios({
+        const result = await axios({
           method: 'GET',
           url: `${String(process.env.API)}/league/${leagueId}`,
         });
+        league = result.data;
       } catch (error) {
         throw new BadRequest('League not exists.');
       }
@@ -38,7 +38,7 @@ export class Pools {
     let matches: Match[];
 
     try {
-      const foot = await axios({
+      const result = await axios({
         method: 'GET',
         url: leagueId
           ? `${String(
@@ -46,7 +46,7 @@ export class Pools {
             )}/match/${leagueId}/league?ft=false&t=${nGames}`
           : `${String(process.env.API)}/match?ft=false&t=${nGames}`,
       });
-      matches = foot.data;
+      matches = result.data;
     } catch (error) {
       throw new BadRequest('Error with external api');
     }
@@ -62,7 +62,7 @@ export class Pools {
             return e.id;
           }),
           leagueId,
-          scoring,
+          league: league?.name,
           ownerId: request.user.sub,
           players: {
             create: {
@@ -88,6 +88,13 @@ export class Pools {
     const pool = await prisma.pool.findUnique({
       where: {
         id,
+      },
+      include: {
+        owner: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
